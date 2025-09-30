@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Gender Recognition</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.4/dist/teachablemachine-image.min.js"></script>
+    <style>
+      body {
+        font-family: "Roboto", Arial, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #fff;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .container {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 30px 40px;
+        border-radius: 15px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        max-width: 400px;
+        width: 90%;
+        backdrop-filter: blur(8.5px);
+        -webkit-backdrop-filter: blur(8.5px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+      }
+      h1 {
+        font-weight: 700;
+        font-size: 2.2rem;
+        margin-bottom: 25px;
+        color: #f0f0f0;
+      }
+      input[type="file"] {
+        display: none;
+      }
+      label[for="file-upload"] {
+        background-color: #6c63ff;
+        color: white;
+        padding: 12px 25px;
+        font-size: 1rem;
+        font-weight: 500;
+        border-radius: 30px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        display: inline-block;
+        margin-bottom: 20px;
+      }
+      label[for="file-upload"]:hover {
+        background-color: #5750d4;
+      }
+      #preview {
+        margin-top: 20px;
+        max-width: 100%;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease;
+      }
+      #preview:hover {
+        transform: scale(1.05);
+      }
+      #result {
+        margin-top: 25px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        background: rgba(255, 255, 255, 0.15);
+        padding: 15px 20px;
+        border-radius: 12px;
+        color: #fff;
+        min-height: 50px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      }
+      .male {
+        color: #4fc3f7;
+      }
+      .female {
+        color: #f48fb1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Gender Recognition Model</h1>
+      <label for="file-upload">Upload Image</label>
+      <input
+        id="file-upload"
+        type="file"
+        accept="image/*"
+        onchange="predictImage(event)"
+      />
+      <img id="preview" src="" alt="Image Preview" />
+      <p id="result">Upload an image to check gender...</p>
+    </div>
+
+    <script>
+      let model;
+      const MODEL_URL = "model/"; // اسم جديد غير URL
+
+      async function loadModel() {
+        const modelURL = MODEL_URL + "model.json";
+        const metadataURL = MODEL_URL + "metadata.json";
+        model = await tmImage.load(modelURL, metadataURL);
+        console.log("✅ Model Loaded");
+      }
+
+      async function predictImage(event) {
+        const imageFile = event.target.files[0];
+        if (!imageFile) return;
+
+        const imageElement = document.getElementById("preview");
+        imageElement.src = window.URL.createObjectURL(imageFile);
+
+        imageElement.onload = async () => {
+          if (!model) {
+            await loadModel();
+          }
+
+          const prediction = await model.predict(imageElement);
+          console.log(prediction);
+
+          let resultText = "";
+          prediction.forEach((p) => {
+            const className = p.className;
+            const prob = (p.probability * 100).toFixed(2);
+            if (className === "Male") {
+              resultText += `<span class="male">${className}: ${prob}%</span><br>`;
+            } else {
+              resultText += `<span class="female">${className}: ${prob}%</span><br>`;
+            }
+          });
+          document.getElementById("result").innerHTML = resultText;
+        };
+      }
+    </script>
+  </body>
+</html>
